@@ -8,26 +8,30 @@
 <body class="bg-light">
 <div class="container py-4">
   <h1 class="h3">Mis Préstamos Activos</h1>
+
   <div class="card shadow-sm">
     <div class="table-responsive">
       <table class="table table-striped m-0">
         <thead class="table-light">
-          <tr><th>ID</th><th>Libro</th><th>Vence</th><th>Estado</th></tr>
+          <tr><th>ID</th><th>Libro</th><th>Prestado</th><th>Vence</th><th>Estado</th></tr>
         </thead>
         <tbody>
+          <tr th:if="${#lists.isEmpty(prestamos)}">
+            <td colspan="5" class="text-center text-muted py-4">No tienes préstamos activos.</td>
+          </tr>
           <tr th:each="p : ${prestamos}">
             <td th:text="${p.id}">1</td>
             <td th:text="${p.ejemplar.libro.titulo}">Libro</td>
-            <td th:text="${p.fechaVence}">2025-08-30</td>
+            <td th:text="${#temporals.format(p.fechaPrestamo,'dd/MM/yyyy')}">01/01/2025</td>
+            <td th:text="${#temporals.format(p.fechaVence,'dd/MM/yyyy')}">15/01/2025</td>
             <td th:text="${p.estado}">ACTIVO</td>
-          </tr>
-          <tr th:if="${#lists.isEmpty(prestamos)}">
-            <td colspan="4" class="text-center text-muted">No tienes préstamos activos.</td>
           </tr>
         </tbody>
       </table>
     </div>
   </div>
+
+  <a class="btn btn-outline-secondary mt-3" th:href="@{/libros}">Volver</a>
 </div>
 </body>
 </html>

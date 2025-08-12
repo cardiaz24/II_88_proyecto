@@ -10,7 +10,15 @@
   <div class="card shadow-sm" style="max-width:400px;width:100%">
     <div class="card-body">
       <h1 class="h4 mb-3 text-center">Iniciar sesión</h1>
+
+      <!-- Mensajes -->
+      <div th:if="${param.error}" class="alert alert-danger">Usuario o contraseña inválidos.</div>
+      <div th:if="${param.logout}" class="alert alert-success">Sesión cerrada correctamente.</div>
+
       <form method="post" th:action="@{/login}">
+        <!-- CSRF -->
+        <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
         <div class="mb-3">
           <label class="form-label">Usuario</label>
           <input class="form-control" type="text" name="username" required/>

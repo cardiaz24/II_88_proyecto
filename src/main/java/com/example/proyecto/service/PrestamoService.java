@@ -11,19 +11,31 @@ import java.time.temporal.ChronoUnit;
 
 @Service
 public class PrestamoService {
+  private static final BigDecimal MULTA_DIARIA = BigDecimal.valueOf(300);
+
   private final PrestamoRepository prestamoRepo;
   private final EjemplarRepository ejemplarRepo;
 
   public PrestamoService(PrestamoRepository p, EjemplarRepository e){
-    this.prestamoRepo=p; this.ejemplarRepo=e;
+    this.prestamoRepo = p;
+    this.ejemplarRepo = e;
   }
 
   @Transactional
   public Prestamo prestar(Usuario usuario, Ejemplar ejemplar){
-    // Reglas: no prestar si ejemplar prestado, usuario con 2 activos o con multas
-    if(ejemplar.isPrestado()) throw new IllegalStateException("El ejemplar ya está prestado");
+    // 1) No prestar si el usuario tiene multas pendientes
+    boolean tieneMultas = prestamoRepo.existsByUsuario_IdAndEstadoAndMultaGreaterThan(
+        usuario.getId(), PrestamoEstado.CON_MORA, BigDecimal.ZERO
+    );
+    if (tieneMultas) throw new IllegalStateException("Usuario con multas pendientes");
+
+    // 2) No prestar si el ejemplar ya tiene un préstamo ACTIVO (validación de BD)
+    boolean ejemplarOcupado = prestamoRepo.existsByEjemplar_IdAndEstado(ejemplar.getId(), PrestamoEstado.ACTIVO);
+    if (ejemplarOcupado || ejemplar.isPrestado()) throw new IllegalStateException("El ejemplar ya está prestado");
+
+    // 3) Máximo 2 préstamos activos por usuario
     long activos = prestamoRepo.countByUsuario_IdAndEstado(usuario.getId(), PrestamoEstado.ACTIVO);
-    if(activos >= 2) throw new IllegalStateException("Máximo 2 préstamos activos por usuario");
+    if (activos >= 2) throw new IllegalStateException("Máximo 2 préstamos activos por usuario");
 
     // Crear préstamo
     LocalDate hoy = LocalDate.now();
@@ -40,12 +52,13 @@ public class PrestamoService {
 
   @Transactional
   public Prestamo devolver(Prestamo pr){
-    if(pr.getEstado()!=PrestamoEstado.ACTIVO) return pr;
-    pr.setFechaDevolucion(LocalDate.now());
+    if (pr.getEstado() != PrestamoEstado.ACTIVO) return pr;
 
+    pr.setFechaDevolucion(LocalDate.now());
     long diasAtraso = Math.max(0, ChronoUnit.DAYS.between(pr.getFechaVence(), pr.getFechaDevolucion()));
-    if(diasAtraso > 0){
-      pr.setMulta(BigDecimal.valueOf(diasAtraso * 300L));
+
+    if (diasAtraso > 0){
+      pr.setMulta(MULTA_DIARIA.multiply(BigDecimal.valueOf(diasAtraso)));
       pr.setEstado(PrestamoEstado.CON_MORA);
     } else {
       pr.setEstado(PrestamoEstado.DEVUELTO);
@@ -61,10 +74,9 @@ public class PrestamoService {
   @Transactional
   public Prestamo limpiarMulta(Prestamo pr){
     pr.setMulta(BigDecimal.ZERO);
-    if(pr.getEstado()==PrestamoEstado.CON_MORA){
+    if (pr.getEstado() == PrestamoEstado.CON_MORA){
       pr.setEstado(PrestamoEstado.DEVUELTO);
     }
     return prestamoRepo.save(pr);
   }
 }
-

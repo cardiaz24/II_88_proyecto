@@ -5,9 +5,12 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Entity @Table(name="prestamo",
+@Entity
+@Table(name="prestamo",
   uniqueConstraints=@UniqueConstraint(name="uk_prestamo_ejemplar_activo", columnNames={"ejemplar_id","estado"}))
-public class Prestamo {
+
+
+  public class Prestamo {
   @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
   private Long id;
 

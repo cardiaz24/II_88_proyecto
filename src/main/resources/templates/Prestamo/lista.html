@@ -1,64 +1,154 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Préstamos</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-</head>
-<body class="bg-light">
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3">Préstamos</h1>
-    <div class="d-flex gap-2">
-      <a class="btn btn-primary" th:href="@{/prestamos/nuevo}">Nuevo Préstamo</a>
-      <a class="btn btn-outline-secondary" th:href="@{/libros}">Libros</a>
-    </div>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Préstamos</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-light">
+    <div class="container py-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3">Préstamos</h1>
+        <div class="d-flex gap-2">
+          <a class="btn btn-primary" th:href="@{/prestamos/nuevo}"
+            >Nuevo Préstamo</a
+          >
+          <a class="btn btn-outline-secondary" th:href="@{/libros}">Libros</a>
+        </div>
+      </div>
 
-  <div th:if="${ok}" class="alert alert-success" th:text="${ok}"></div>
-  <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+      <!-- Mensajes flash -->
+      <div th:if="${ok}" class="alert alert-success" th:text="${ok}"></div>
+      <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-  <div class="card shadow-sm">
-    <div class="table-responsive">
-      <table class="table table-striped m-0">
-        <thead class="table-light">
-        <tr>
-          <th>ID</th><th>Usuario</th><th>Ejemplar</th><th>Libro</th>
-          <th>Prestado</th><th>Vence</th><th>Devolución</th><th>Estado</th><th>Multa</th><th>Acciones</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="p : ${prestamos}">
-          <td th:text="${p.id}">1</td>
-          <td th:text="${p.usuario.username}">user</td>
-          <td th:text="${p.ejemplar.id}">10</td>
-          <td th:text="${p.ejemplar.libro.titulo}">Libro</td>
-          <td th:text="${p.fechaPrestamo}"></td>
-          <td th:text="${p.fechaVence}"></td>
-          <td th:text="${p.fechaDevolucion}">—</td>
-          <td th:text="${p.estado}">ACTIVO</td>
-          <td th:text="${#numbers.formatDecimal(p.multa,1,2)}">0.00</td>
-          <td>
-            <div class="d-flex gap-2">
-              <form th:action="@{'/prestamos/devolver/' + ${p.id}}" method="post">
-                <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <button class="btn btn-sm btn-outline-primary" type="submit">Devolver</button>
-              </form>
-              <form th:action="@{'/prestamos/limpiar-multa/' + ${p.id}}" method="post">
-                <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <button class="btn btn-sm btn-outline-warning" type="submit">Limpiar Multa</button>
-              </form>
-              <form th:action="@{'/prestamos/eliminar/' + ${p.id}}" method="post" onsubmit="return confirm('¿Eliminar?')">
-                <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
-              </form>
-            </div>
-          </td>
-        </tr>
-        </tbody>
-      </table>
+      <div class="card shadow-sm">
+        <div class="table-responsive">
+          <table class="table table-striped m-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Usuario</th>
+                <th>Ejemplar</th>
+                <th>Libro</th>
+                <th>Prestado</th>
+                <th>Vence</th>
+                <th>Devolución</th>
+                <th>Estado</th>
+                <th>Multa</th>
+                <th style="width: 260px">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Fila vacía -->
+              <tr th:if="${#lists.isEmpty(prestamos)}">
+                <td colspan="10" class="text-center text-muted py-4">
+                  No hay préstamos registrados.
+                </td>
+              </tr>
+
+              <!-- Filas de datos -->
+              <tr th:each="p : ${prestamos}">
+                <td th:text="${p.id}">1</td>
+                <td th:text="${p.usuario.username}">user</td>
+                <td th:text="${p.ejemplar.id}">10</td>
+                <td th:text="${p.ejemplar.libro.titulo}">Libro</td>
+
+                <!-- Fechas con formato -->
+                <td
+                  th:text="${#temporals.format(p.fechaPrestamo,'dd/MM/yyyy')}"
+                >
+                  01/01/2025
+                </td>
+                <td th:text="${#temporals.format(p.fechaVence,'dd/MM/yyyy')}">
+                  15/01/2025
+                </td>
+                <td
+                  th:text="${p.fechaDevolucion != null ? #temporals.format(p.fechaDevolucion,'dd/MM/yyyy') : '—'}"
+                >
+                  —
+                </td>
+
+                <td th:text="${p.estado}">ACTIVO</td>
+
+                <!-- Moneda colones con 2 decimales -->
+                <td
+                  th:text="${p.multa != null ? '₡' + #numbers.formatDecimal(p.multa,1,2) : '₡0.00'}"
+                >
+                  ₡0.00
+                </td>
+
+                <td>
+                  <div class="d-flex flex-wrap gap-2">
+                    <!-- Devolver solo si está ACTIVO -->
+                    <form
+                      th:if="${p.estado == T(com.example.proyecto.model.PrestamoEstado).ACTIVO}"
+                      th:action="@{'/prestamos/devolver/' + ${p.id}}"
+                      method="post"
+                    >
+                      <input
+                        type="hidden"
+                        th:if="${_csrf}"
+                        th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}"
+                      />
+                      <button
+                        class="btn btn-sm btn-outline-primary"
+                        type="submit"
+                      >
+                        Devolver
+                      </button>
+                    </form>
+
+                    <!-- Limpiar Multa solo si CON_MORA -->
+                    <form
+                      th:if="${p.estado == T(com.example.proyecto.model.PrestamoEstado).CON_MORA}"
+                      th:action="@{'/prestamos/limpiar-multa/' + ${p.id}}"
+                      method="post"
+                    >
+                      <input
+                        type="hidden"
+                        th:if="${_csrf}"
+                        th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}"
+                      />
+                      <button
+                        class="btn btn-sm btn-outline-warning"
+                        type="submit"
+                      >
+                        Limpiar Multa
+                      </button>
+                    </form>
+
+                    <!-- Eliminar (siempre disponible para ADMIN) -->
+                    <form
+                      th:action="@{'/prestamos/eliminar/' + ${p.id}}"
+                      method="post"
+                      onsubmit="return confirm('¿Eliminar este préstamo?');"
+                    >
+                      <input
+                        type="hidden"
+                        th:if="${_csrf}"
+                        th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}"
+                      />
+                      <button
+                        class="btn btn-sm btn-outline-danger"
+                        type="submit"
+                      >
+                        Eliminar
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-</body>
+  </body>
 </html>
