@@ -1,0 +1,21 @@
+
+body {
+  background-color: #f8f9fa;
+}
+
+.form-container {
+  max-width: 600px;
+  margin: auto;
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-container h1 {
+  margin-bottom: 30px;
+}
+
+.form-container button {
+  width: 100%;
+}

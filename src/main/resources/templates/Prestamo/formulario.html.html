@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Nuevo Préstamo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <h1 class="h4 mb-3">Nuevo Préstamo</h1>
+  <form th:action="@{/prestamos}" th:object="${prestamo}" method="post">
+    <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <div class="mb-3">
+      <label class="form-label">Usuario</label>
+      <select class="form-select" th:field="*{usuario.id}" required>
+        <option value="" disabled selected>-- Selecciona --</option>
+        <option th:each="u : ${usuarios}" th:value="${u.id}" th:text="${u.username}"></option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Ejemplar</label>
+      <select class="form-select" th:field="*{ejemplar.id}" required>
+        <option value="" disabled selected>-- Selecciona --</option>
+        <option th:each="e : ${ejemplares}" th:value="${e.id}" th:text="${e.libro.titulo + ' (#' + e.id + ')'}"></option>
+      </select>
+    </div>
+    <button class="btn btn-success" type="submit">Guardar</button>
+    <a class="btn btn-outline-secondary" th:href="@{/prestamos}">Volver</a>
+  </form>
+</div>
+</body>
+</html>
