@@ -12,36 +12,39 @@ public class SecurityConfig {
 
     private final UsuarioDetailsService uds;
 
-    public SecurityConfig(UsuarioDetailsService uds) {
-        this.uds = uds;
-    }
+  public SecurityConfig(UsuarioDetailsService uds, CustomSuccessHandler successHandler) {
+  this.uds = uds;
+  this.successHandler = successHandler;
+}
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
-                .headers(h -> h.frameOptions(f -> f.sameOrigin()))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/h2-console/**", "/css/**", "/js/**", "/img/**").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/usuario/perfil", "/prestamos/mis-libros").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/prestamos/devolver/**")
-                        .hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/libros/**", "/prestamos/**").hasRole("ADMIN")
-                        .anyRequest().authenticated())
-                .formLogin(login -> login
-                        .loginPage("/login")
-                        .permitAll()
-                        .defaultSuccessUrl("/libros", true))
-                .exceptionHandling(e -> e.accessDeniedPage("/access-denied"))
-                .logout(l -> l.logoutUrl("/logout").logoutSuccessUrl("/login?logout").permitAll())
-                .userDetailsService(uds);
+private final CustomSuccessHandler successHandler;
 
-        return http.build();
-    }
+   @Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  http
+    .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
+    .headers(h -> h.frameOptions(f -> f.sameOrigin()))
+    .authorizeHttpRequests(auth -> auth
+        .requestMatchers("/h2-console/**", "/css/**", "/js/**", "/img/**").permitAll()
+        .requestMatchers("/admin/**").hasRole("ADMIN")
+        .requestMatchers("/usuario/perfil", "/prestamos/mis-libros").hasAnyRole("USER", "ADMIN")
+        .requestMatchers(org.springframework.http.HttpMethod.POST, "/prestamos/devolver/**")
+        .hasAnyRole("USER", "ADMIN")
+        .requestMatchers("/libros/**", "/prestamos/**").hasRole("ADMIN")
+        .anyRequest().authenticated())
+    .formLogin(login -> login
+        .loginPage("/login")
+        .permitAll()
+        .successHandler(successHandler)) 
+    .exceptionHandling(e -> e.accessDeniedPage("/access-denied"))
+    .logout(l -> l.logoutUrl("/logout").logoutSuccessUrl("/login?logout").permitAll())
+    .userDetailsService(uds);
+
+  return http.build();
+}
 }
