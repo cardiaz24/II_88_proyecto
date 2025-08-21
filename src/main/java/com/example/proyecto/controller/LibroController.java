@@ -11,24 +11,27 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-@Controller @RequestMapping("/libros")
+@Controller
+@RequestMapping("/libros")
 public class LibroController {
   private final LibroService libroService;
   private final AutorRepository autorRepo;
   private final CategoriaRepository categoriaRepo;
 
-  public LibroController(LibroService s, AutorRepository a, CategoriaRepository c){
-    this.libroService=s; this.autorRepo=a; this.categoriaRepo=c;
+  public LibroController(LibroService s, AutorRepository a, CategoriaRepository c) {
+    this.libroService = s;
+    this.autorRepo = a;
+    this.categoriaRepo = c;
   }
 
   @GetMapping
-  public String listar(Model model){
+  public String listar(Model model) {
     model.addAttribute("libros", libroService.findAll());
     return "libros/lista";
   }
 
   @GetMapping("/nuevo")
-  public String nuevo(Model model){
+  public String nuevo(Model model) {
     model.addAttribute("libro", new Libro());
     model.addAttribute("autores", autorRepo.findAll());
     model.addAttribute("categorias", categoriaRepo.findAll());
@@ -37,23 +40,26 @@ public class LibroController {
 
   @PostMapping
   public String guardar(@Valid @ModelAttribute("libro") Libro libro,
-                        BindingResult br,
-                        Model model,
-                        RedirectAttributes ra){
-    if(br.hasErrors()){
+      BindingResult br,
+      Model model,
+      RedirectAttributes ra) {
+    if (br.hasErrors()) {
       model.addAttribute("autores", autorRepo.findAll());
       model.addAttribute("categorias", categoriaRepo.findAll());
       return "libros/formulario";
     }
     libroService.save(libro);
-    ra.addFlashAttribute("ok","Libro guardado correctamente");
+    ra.addFlashAttribute("ok", "Libro guardado correctamente");
     return "redirect:/libros";
   }
 
   @GetMapping("/editar/{id}")
-  public String editar(@PathVariable Long id, Model model, RedirectAttributes ra){
+  public String editar(@PathVariable Long id, Model model, RedirectAttributes ra) {
     var opt = libroService.findById(id);
-    if(opt.isEmpty()){ ra.addFlashAttribute("error","Libro no existe"); return "redirect:/libros"; }
+    if (opt.isEmpty()) {
+      ra.addFlashAttribute("error", "Libro no existe");
+      return "redirect:/libros";
+    }
     model.addAttribute("libro", opt.get());
     model.addAttribute("autores", autorRepo.findAll());
     model.addAttribute("categorias", categoriaRepo.findAll());
@@ -61,9 +67,9 @@ public class LibroController {
   }
 
   @PostMapping("/eliminar/{id}")
-  public String eliminar(@PathVariable Long id, RedirectAttributes ra){
+  public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
     libroService.deleteById(id);
-    ra.addFlashAttribute("ok","Libro eliminado");
+    ra.addFlashAttribute("ok", "Libro eliminado");
     return "redirect:/libros";
   }
 }

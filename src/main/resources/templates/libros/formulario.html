@@ -8,7 +8,10 @@
 </head>
 <body class="bg-light">
 <div class="container form-container mt-5">
-  <h1 class="h4" th:text="${libro.id != null} ? 'Editar Libro' : 'Nuevo Libro'"></h1>
+
+  <!-- Título sin usar operador ternario -->
+  <h1 class="h4" th:if="${libro != null and libro.id != null}">Editar Libro</h1>
+  <h1 class="h4" th:unless="${libro != null and libro.id != null}">Nuevo Libro</h1>
 
   <form th:action="@{/libros}" th:object="${libro}" method="post" novalidate>
     <!-- CSRF -->
@@ -18,23 +21,21 @@
 
     <div class="mb-3">
       <label for="titulo" class="form-label">Título</label>
-      <input type="text" th:field="*{titulo}" id="titulo" class="form-control" required maxlength="200"/>
+      <input type="text" id="titulo" class="form-control" th:field="*{titulo}" required maxlength="200"/>
       <div class="text-danger small" th:if="${#fields.hasErrors('titulo')}" th:errors="*{titulo}"></div>
     </div>
 
     <div class="mb-3">
       <label for="unidades" class="form-label">Unidades</label>
-      <input type="number" th:field="*{unidades}" id="unidades" class="form-control" required min="0"/>
+      <input type="number" id="unidades" class="form-control" th:field="*{unidades}" required min="0"/>
       <div class="text-danger small" th:if="${#fields.hasErrors('unidades')}" th:errors="*{unidades}"></div>
     </div>
 
     <div class="mb-3">
       <label for="autores" class="form-label">Autores</label>
-      <select th:field="*{autores}" id="autores" class="form-select" multiple size="5">
-        <option th:each="autor : ${autores}"
-                th:value="${autor.id}"
-                th:text="${autor.nombre + ' (' + autor.pais + ')'}">
-        </option>
+      <select id="autores" class="form-select" th:field="*{autores}" multiple size="5">
+        <option th:each="a : ${autores}" th:value="${a.id}"
+                th:text="${a.nombre + ' (' + a.pais + ')'}"></option>
       </select>
       <div class="form-text">Usa Ctrl/⌘ para seleccionar varios.</div>
       <div class="text-danger small" th:if="${#fields.hasErrors('autores')}" th:errors="*{autores}"></div>
@@ -42,8 +43,8 @@
 
     <div class="mb-3">
       <label for="categoria" class="form-label">Categoría</label>
-      <select th:field="*{categoria}" id="categoria" class="form-select" required>
-        <option value="" disabled th:selected="${libro.categoria == null}">-- Selecciona --</option>
+      <select id="categoria" class="form-select" th:field="*{categoria}" required>
+        <option value="" disabled th:selected="${libro == null or libro.categoria == null}">-- Selecciona --</option>
         <option th:each="c : ${categorias}" th:value="${c.id}" th:text="${c.nombre}"></option>
       </select>
       <div class="text-danger small" th:if="${#fields.hasErrors('categoria')}" th:errors="*{categoria}"></div>
@@ -51,7 +52,7 @@
 
     <div class="d-flex gap-2">
       <button type="submit" class="btn btn-success">Guardar</button>
-      <a th:href="@{/libros}" class="btn btn-outline-secondary">Volver a la lista</a>
+      <a th:href="@{/libros}" class="btn btn-outline-secondary">Volver</a>
     </div>
   </form>
 </div>
