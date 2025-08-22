@@ -35,12 +35,13 @@ public class PrestamoController {
   }
 
   // USER/ADMIN: mis libros
-  @GetMapping("/mis-libros")
-  public String misLibros(@AuthenticationPrincipal User user, Model model) {
+ @GetMapping("/mis-libros")
+public String misLibros(@AuthenticationPrincipal User user, Model model) {
     var u = usuarioRepo.findByUsername(user.getUsername()).orElseThrow();
-    model.addAttribute("prestamos", prestamoRepo.findByUsuario_IdAndEstado(u.getId(), PrestamoEstado.ACTIVO));
+    model.addAttribute("prestamos", prestamoRepo.findByUsuario_Id(u.getId()));
     return "prestamos/mis-libros";
-  }
+}
+
 
   // ADMIN: crear préstamo
   @GetMapping("/nuevo")
@@ -88,4 +89,14 @@ public class PrestamoController {
     ra.addFlashAttribute("ok", "Préstamo eliminado");
     return "redirect:/prestamos";
   }
+
+@GetMapping("/historial")
+public String historial(@AuthenticationPrincipal User user, Model model) {
+    var u = usuarioRepo.findByUsername(user.getUsername()).orElseThrow();
+    var prestamos = prestamoRepo.findByUsuario_IdOrderByFechaPrestamoDesc(u.getId());
+    model.addAttribute("prestamos", prestamos);
+    return "prestamos/historial";
+}
+
+
 }
