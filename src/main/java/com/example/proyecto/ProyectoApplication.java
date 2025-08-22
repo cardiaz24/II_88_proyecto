@@ -21,7 +21,7 @@ public class ProyectoApplication {
 		return args -> {
 			if (!usuarios.existsByUsername("admin")) {
 				usuarios.save(new Usuario("admin", encoder.encode("admin123"), Rol.ADMIN));
-				System.out.println( "Usuario ADMIN creado: admin / admin123");
+				System.out.println("Usuario ADMIN creado: admin / admin123");
 			}
 			if (!usuarios.existsByUsername("user")) {
 				usuarios.save(new Usuario("user", encoder.encode("user123"), Rol.USER));

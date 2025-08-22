@@ -31,27 +31,48 @@ public class LibroController {
   }
 
   @GetMapping("/nuevo")
-  public String nuevo(Model model) {
+  public String nuevoLibro(Model model) {
     model.addAttribute("libro", new Libro());
+    model.addAttribute("categorias", categoriaRepo.findAll());
+    model.addAttribute("autores", autorRepo.findAll());
+    return "libros/formulario";
+  }
+
+  /**
+   * @param libro
+   * @param br
+   * @param model
+   * @param ra
+   * @return
+   */
+@PostMapping
+public String guardar(@Valid @ModelAttribute("libro") Libro libro,
+                      BindingResult br,
+                      Model model,
+                      RedirectAttributes ra) {
+  
+  if (br.hasErrors()) {
     model.addAttribute("autores", autorRepo.findAll());
     model.addAttribute("categorias", categoriaRepo.findAll());
     return "libros/formulario";
   }
 
-  @PostMapping
-  public String guardar(@Valid @ModelAttribute("libro") Libro libro,
-      BindingResult br,
-      Model model,
-      RedirectAttributes ra) {
-    if (br.hasErrors()) {
-      model.addAttribute("autores", autorRepo.findAll());
-      model.addAttribute("categorias", categoriaRepo.findAll());
-      return "libros/formulario";
-    }
-    libroService.save(libro);
-    ra.addFlashAttribute("ok", "Libro guardado correctamente");
-    return "redirect:/libros";
+  // Validación de duplicado
+  boolean existeOtro = libro.getId() == null
+    ? libroService.existePorTituloYCategoria(libro.getTitulo(), libro.getCategoria().getId())
+    : libroService.existePorTituloYCategoriaYIdNo(libro.getTitulo(), libro.getCategoria().getId(), libro.getId());
+
+  if (existeOtro) {
+    br.rejectValue("titulo", "error.libro", "Ya existe un libro con ese título en esta categoría");
+    model.addAttribute("autores", autorRepo.findAll());
+    model.addAttribute("categorias", categoriaRepo.findAll());
+    return "libros/formulario";
   }
+
+  libroService.save(libro);
+  ra.addFlashAttribute("ok", "Libro guardado correctamente");
+  return "redirect:/libros";
+}
 
   @GetMapping("/editar/{id}")
   public String editar(@PathVariable Long id, Model model, RedirectAttributes ra) {

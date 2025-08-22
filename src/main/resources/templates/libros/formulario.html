@@ -41,7 +41,7 @@
       <div class="text-danger small" th:if="${#fields.hasErrors('autores')}" th:errors="*{autores}"></div>
     </div>
 
-    <div class="mb-3">
+    <div class="mb-3"> 
       <label for="categoria" class="form-label">Categoría</label>
       <select id="categoria" class="form-select" th:field="*{categoria}" required>
         <option value="" disabled th:selected="${libro == null or libro.categoria == null}">-- Selecciona --</option>

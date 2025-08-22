@@ -16,4 +16,14 @@ public class LibroService {
   public Optional<Libro> findById(Long id){ return repo.findById(id); }
   public Libro save(Libro l){ return repo.save(l); }
   public void deleteById(Long id){ repo.deleteById(id); }
+
+
+public boolean existePorTituloYCategoria(String titulo, Long categoriaId) {
+  return repo.existsByTituloIgnoreCaseAndCategoria_Id(titulo, categoriaId);
+}
+
+public boolean existePorTituloYCategoriaYIdNo(String titulo, Long categoriaId, Long id) {
+  return repo.existsByTituloIgnoreCaseAndCategoria_IdAndIdNot(titulo, categoriaId, id);
+}
+
 }

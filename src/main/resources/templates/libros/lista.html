@@ -1,67 +1,99 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Catálogo de Libros</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-</head>
-<body class="bg-light">
-<div class="container py-4">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Catálogo de Libros</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    />
+  </head>
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 m-0">Catálogo de Libros</h1>
-    <div class="d-flex gap-2">
-      <a class="btn btn-primary" th:href="@{/libros/nuevo}">Nuevo Libro</a>
-      <a class="btn btn-outline-secondary" th:href="@{/}">Inicio</a>
+  <body class="bg-light">
+    <div class="container py-4">
+      <!-- Título y acciones -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 fw-bold text-primary m-0">Catálogo de Libros</h1>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-success" th:href="@{/libros/nuevo}">
+            <i class="bi bi-plus-circle"></i> Nuevo Libro
+          </a>
+          <a class="btn btn-outline-secondary" th:href="@{/prestamos}">
+            <i class="bi bi-journal-text"></i> Ver Préstamos
+          </a>
+          <a class="btn btn-outline-dark" th:href="@{/}">
+            <i class="bi bi-house"></i> Inicio
+          </a>
+        </div>
+      </div>
+
+      <!-- Mensajes flash -->
+      <div th:if="${ok}" class="alert alert-success" th:text="${ok}"></div>
+      <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+      <!-- Tabla de libros -->
+      <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+          <table class="table table-striped m-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 80px">ID</th>
+                <th>Título</th>
+                <th style="width: 120px">Unidades</th>
+                <th style="width: 180px">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${#lists.isEmpty(libros)}">
+                <td colspan="4" class="text-center text-muted py-4">
+                  No hay libros registrados.
+                </td>
+              </tr>
+
+              <tr th:each="libro : ${libros}">
+                <td th:text="${libro.id}">1</td>
+                <td th:text="${libro.titulo}">Título</td>
+                <td th:text="${libro.unidades}">0</td>
+                <td>
+                  <div class="d-flex gap-2">
+                    <a
+                      class="btn btn-sm btn-outline-primary"
+                      th:href="@{'/libros/editar/' + ${libro.id}}"
+                    >
+                      <i class="bi bi-pencil-square"></i> Editar
+                    </a>
+
+                    <!-- Eliminar por POST -->
+                    <form
+                      th:action="@{'/libros/eliminar/' + ${libro.id}}"
+                      method="post"
+                      onsubmit="return confirm('¿Eliminar este libro?');"
+                    >
+                      <input
+                        type="hidden"
+                        th:if="${_csrf}"
+                        th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}"
+                      />
+                      <button
+                        type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                      >
+                        <i class="bi bi-trash3"></i> Eliminar
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-  </div>
-
-  <!-- Mensajes flash -->
-  <div th:if="${ok}" class="alert alert-success" th:text="${ok}"></div>
-  <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-
-  <div class="card shadow-sm">
-    <div class="table-responsive">
-      <table class="table table-striped m-0 align-middle">
-        <thead class="table-light">
-          <tr>
-            <th style="width:80px;">ID</th>
-            <th>Título</th>
-            <th style="width:120px;">Unidades</th>
-            <th style="width:180px;">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr th:if="${#lists.isEmpty(libros)}">
-            <td colspan="4" class="text-center text-muted py-4">No hay libros registrados.</td>
-          </tr>
-
-          <tr th:each="libro : ${libros}">
-            <td th:text="${libro.id}">1</td>
-            <td th:text="${libro.titulo}">Título</td>
-            <td th:text="${libro.unidades}">0</td>
-            <td>
-              <div class="d-flex gap-2">
-                <a class="btn btn-sm btn-outline-primary"
-                   th:href="@{'/libros/editar/' + ${libro.id}}">
-                  Editar
-                </a>
-
-                <!-- Eliminar por POST -->
-                <form th:action="@{'/libros/eliminar/' + ${libro.id}}" method="post"
-                      onsubmit="return confirm('¿Eliminar este libro?');">
-                  <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                  <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
-                </form>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-</div>
-</body>
+  </body>
 </html>

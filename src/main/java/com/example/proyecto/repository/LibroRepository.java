@@ -8,4 +8,8 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
   List<Libro> findByCategoria_IdOrderByTituloAsc(Long categoriaId);
   List<Libro> findByAutores_Id(Long autorId);
   boolean existsByTituloIgnoreCaseAndCategoria_Id(String titulo, Long categoriaId);
+
+  boolean existsByTituloIgnoreCaseAndCategoria_IdAndIdNot(String titulo, Long categoriaId, Long id);
+
+  
 }
