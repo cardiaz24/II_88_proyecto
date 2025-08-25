@@ -1,154 +1,364 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Préstamos</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-  </head>
-  <body class="bg-light">
-    <div class="container py-4">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3">Préstamos</h1>
-        <div class="d-flex gap-2">
-          <a class="btn btn-primary" th:href="@{prestamos/nuevo}"
-            >Nuevo Préstamo</a
-          >
-          <a class="btn btn-outline-secondary" th:href="@{/libros}">Libros</a>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gestión de Préstamos - Sistema de Biblioteca</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+  <style>
+    .card {
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .badge-activo {
+      background-color: #198754;
+    }
+    .badge-devuelto {
+      background-color: #6c757d;
+    }
+    .badge-mora {
+      background-color: #dc3545;
+    }
+    .table th {
+      border-top: none;
+      font-weight: 600;
+      color: #495057;
+      background-color: #f8f9fa;
+    }
+    .btn-action {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+    }
+    .vencido {
+      background-color: #fff5f5;
+    }
+    .proximo-vencer {
+      background-color: #fff9db;
+    }
+    .multa-cell {
+      font-weight: 600;
+    }
+    .multa-pendiente {
+      color: #dc3545;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container">
+      <a class="navbar-brand" th:href="@{/}">
+        <i class="bi bi-book-half"></i> Sistema de Biblioteca
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link" th:href="@{/}">Inicio</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" th:href="@{/libros}">Libros</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="#">Préstamos</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" th:href="@{/prestamos/vencidos}">Préstamos Vencidos</a>
+          </li>
+        </ul>
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" th:href="@{/usuario/perfil}">
+              <i class="bi bi-person-circle"></i> Mi Perfil
+            </a>
+          </li>
+          <li class="nav-item">
+            <form th:action="@{/logout}" method="post" class="d-inline">
+              <button type="submit" class="btn btn-outline-light btn-sm ms-2">Cerrar Sesión</button>
+            </form>
+          </li>
+        </ul>
       </div>
+    </div>
+  </nav>
 
-      <!-- Mensajes flash -->
-      <div th:if="${ok}" class="alert alert-success" th:text="${ok}"></div>
-      <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <div class="card mb-4">
+          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0"><i class="bi bi-journal-check me-2"></i>Gestión de Préstamos</h2>
+            <div>
+              <a class="btn btn-light btn-sm me-2" th:href="@{/prestamos}">
+                <i class="bi bi-arrow-clockwise"></i> Actualizar
+              </a>
+              <a class="btn btn-light btn-sm" th:href="@{/prestamos/nuevo}">
+                <i class="bi bi-plus-circle"></i> Nuevo Préstamo
+              </a>
+            </div>
+          </div>
+          <div class="card-body">
+            <!-- Mensajes flash -->
+            <div th:if="${ok}" class="alert alert-success alert-dismissible fade show" role="alert">
+              <i class="bi bi-check-circle-fill me-2"></i>
+              <span th:text="${ok}"></span>
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              <span th:text="${error}"></span>
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
 
-      <div class="card shadow-sm">
-        <div class="table-responsive">
-          <table class="table table-striped m-0 align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>ID</th>
-                <th>Usuario</th>
-                <th>Ejemplar</th>
-                <th>Libro</th>
-                <th>Prestado</th>
-                <th>Vence</th>
-                <th>Devolución</th>
-                <th>Estado</th>
-                <th>Multa</th>
-                <th style="width: 260px">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Fila vacía -->
-              <tr th:if="${#lists.isEmpty(prestamos)}">
-                <td colspan="10" class="text-center text-muted py-4">
-                  No hay préstamos registrados.
-                </td>
-              </tr>
-
-              <!-- Filas de datos -->
-              <tr th:each="p : ${prestamos}">
-                <td th:text="${p.id}">1</td>
-                <td th:text="${p.usuario.username}">user</td>
-                <td th:text="${p.ejemplar.id}">10</td>
-                <td th:text="${p.ejemplar.libro.titulo}">Libro</td>
-
-                <!-- Fechas con formato -->
-                <td
-                  th:text="${#temporals.format(p.fechaPrestamo,'dd/MM/yyyy')}"
-                >
-                  01/01/2025
-                </td>
-                <td th:text="${#temporals.format(p.fechaVence,'dd/MM/yyyy')}">
-                  15/01/2025
-                </td>
-                <td
-                  th:text="${p.fechaDevolucion != null ? #temporals.format(p.fechaDevolucion,'dd/MM/yyyy') : '—'}"
-                >
-                  —
-                </td>
-
-                <td th:text="${p.estado}">ACTIVO</td>
-
-                <!-- Moneda colones con 2 decimales -->
-                <td
-                  th:text="${p.multa != null ? '₡' + #numbers.formatDecimal(p.multa,1,2) : '₡0.00'}"
-                >
-                  ₡0.00
-                </td>
-
-                <td>
-                  <div class="d-flex flex-wrap gap-2">
-                    <!-- Devolver solo si está ACTIVO -->
-                    <form
-                      th:if="${p.estado == T(com.example.proyecto.model.PrestamoEstado).ACTIVO}"
-                      th:action="@{'/prestamos/devolver/' + ${p.id}}"
-                      method="post"
-                    >
-                      <input
-                        type="hidden"
-                        th:if="${_csrf}"
-                        th:name="${_csrf.parameterName}"
-                        th:value="${_csrf.token}"
-                      />
-                      <button
-                        class="btn btn-sm btn-outline-primary"
-                        type="submit"
-                      >
-                        Devolver
-                      </button>
-                    </form>
-
-                    <!-- Limpiar Multa solo si CON_MORA -->
-                    <form
-                      th:if="${p.estado == T(com.example.proyecto.model.PrestamoEstado).CON_MORA}"
-                      th:action="@{'/prestamos/limpiar-multa/' + ${p.id}}"
-                      method="post"
-                    >
-                      <input
-                        type="hidden"
-                        th:if="${_csrf}"
-                        th:name="${_csrf.parameterName}"
-                        th:value="${_csrf.token}"
-                      />
-                      <button
-                        class="btn btn-sm btn-outline-warning"
-                        type="submit"
-                      >
-                        Limpiar Multa
-                      </button>
-                    </form>
-
-                    <!-- Eliminar (siempre disponible para ADMIN) -->
-                    <form
-                      th:action="@{'/prestamos/eliminar/' + ${p.id}}"
-                      method="post"
-                      onsubmit="return confirm('¿Eliminar este préstamo?');"
-                    >
-                      <input
-                        type="hidden"
-                        th:if="${_csrf}"
-                        th:name="${_csrf.parameterName}"
-                        th:value="${_csrf.token}"
-                      />
-                      <button
-                        class="btn btn-sm btn-outline-danger"
-                        type="submit"
-                      >
-                        Eliminar
-                      </button>
-                    </form>
+            <!-- Estadísticas rápidas -->
+            <div class="row mb-4">
+              <div class="col-md-3">
+                <div class="card text-center bg-light">
+                  <div class="card-body py-3">
+                    <h6 class="card-title">Total Préstamos</h6>
+                    <p class="card-text h4 mb-0" th:text="${prestamos.size()}">0</p>
                   </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card text-center bg-light">
+                  <div class="card-body py-3">
+                    <h6 class="card-title">Activos</h6>
+                    <p class="card-text h4 mb-0 text-success" 
+                       th:text="${#lists.size(#lists.select(prestamos, p -> p.estado.name() == 'ACTIVO'))}">0</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card text-center bg-light">
+                  <div class="card-body py-3">
+                    <h6 class="card-title">Devueltos</h6>
+                    <p class="card-text h4 mb-0 text-secondary" 
+                       th:text="${#lists.size(#lists.select(prestamos, p -> p.estado.name() == 'DEVUELTO'))}">0</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card text-center bg-light">
+                  <div class="card-body py-3">
+                    <h6 class="card-title">Con Mora</h6>
+                    <p class="card-text h4 mb-0 text-danger" 
+                       th:text="${#lists.size(#lists.select(prestamos, p -> p.estado.name() == 'CON_MORA'))}">0</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <input type="text" id="searchInput" class="form-control" placeholder="Buscar por usuario, libro, estado...">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <select id="estadoFilter" class="form-select">
+                  <option value="">Todos los estados</option>
+                  <option value="ACTIVO">Activos</option>
+                  <option value="DEVUELTO">Devueltos</option>
+                  <option value="CON_MORA">Con mora</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Tabla de préstamos -->
+            <div class="table-responsive">
+              <table id="prestamosTable" class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Usuario</th>
+                    <th>Libro</th>
+                    <th>Ejemplar</th>
+                    <th>Prestado</th>
+                    <th>Vence</th>
+                    <th>Devolución</th>
+                    <th>Estado</th>
+                    <th class="text-end">Multa (₡)</th>
+                    <th class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Fila vacía -->
+                  <tr th:if="${#lists.isEmpty(prestamos)}">
+                    <td colspan="10" class="text-center text-muted py-5">
+                      <i class="bi bi-inbox display-4 d-block mb-2"></i>
+                      No hay préstamos registrados.
+                    </td>
+                  </tr>
+
+                  <!-- Filas de datos -->
+                  <tr th:each="p : ${prestamos}" 
+                      th:classappend="${p.estado.name() == 'CON_MORA'} ? 'vencido' : ''"
+                      th:classappend="${p.estado.name() == 'ACTIVO' and p.fechaVence.isBefore(#temporals.createToday().plusDays(3))} ? 'proximo-vencer' : ''">
+                    <td th:text="${p.id}">1</td>
+                    <td>
+                      <div th:text="${p.usuario.nombre + ' ' + p.usuario.apellidos}">Nombre Usuario</div>
+                      <small class="text-muted" th:text="${p.usuario.username}">username</small>
+                    </td>
+                    <td th:text="${p.ejemplar.libro.titulo}">Libro</td>
+                    <td>
+                      <span class="badge bg-secondary" th:text="${p.ejemplar.codigo}">COD-001</span>
+                    </td>
+                    <td th:text="${#temporals.format(p.fechaPrestamo, 'dd/MM/yyyy')}">01/01/2025</td>
+                    <td>
+                      <span th:text="${#temporals.format(p.fechaVence, 'dd/MM/yyyy')}">15/01/2025</span>
+                      <th:block th:if="${p.estado.name() == 'ACTIVO' and p.fechaVence.isBefore(#temporals.createToday())}">
+                        <span class="badge bg-danger ms-1">Vencido</span>
+                      </th:block>
+                    </td>
+                    <td>
+                      <th:block th:if="${p.fechaDevolucion}">
+                        <span th:text="${#temporals.format(p.fechaDevolucion, 'dd/MM/yyyy')}">20/01/2025</span>
+                      </th:block>
+                      <th:block th:unless="${p.fechaDevolucion}">
+                        <span class="text-muted">—</span>
+                      </th:block>
+                    </td>
+                    <td>
+                      <th:block th:switch="${p.estado.name()}">
+                        <span th:case="'ACTIVO'" class="badge badge-activo">Activo</span>
+                        <span th:case="'DEVUELTO'" class="badge badge-devuelto">Devuelto</span>
+                        <span th:case="'CON_MORA'" class="badge badge-mora">En mora</span>
+                      </th:block>
+                    </td>
+                    <td class="text-end multa-cell">
+                      <th:block th:if="${p.multa != null and p.multa > 0}">
+                        <span th:classappend="${p.estado.name() == 'CON_MORA'} ? 'multa-pendiente' : ''"
+                              th:text="'₡' + #numbers.formatDecimal(p.multa, 1, 'COMMA', 2, 'POINT')">₡0.00</span>
+                      </th:block>
+                      <th:block th:unless="${p.multa != null and p.multa > 0}">
+                        <span class="text-muted">₡0.00</span>
+                      </th:block>
+                    </td>
+                    <td>
+                      <div class="d-flex justify-content-center gap-2">
+                        <!-- Devolver solo si está ACTIVO -->
+                        <form th:if="${p.estado.name() == 'ACTIVO'}"
+                              th:action="@{'/prestamos/devolver/' + ${p.id}}"
+                              method="post">
+                          <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                          <button class="btn btn-sm btn-outline-primary btn-action" type="submit" 
+                                  title="Devolver préstamo">
+                            <i class="bi bi-arrow-return-left"></i>
+                          </button>
+                        </form>
+
+                        <!-- Limpiar Multa solo si CON_MORA -->
+                        <form th:if="${p.estado.name() == 'CON_MORA'}"
+                              th:action="@{'/prestamos/limpiar-multa/' + ${p.id}}"
+                              method="post">
+                          <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                          <button class="btn btn-sm btn-outline-warning btn-action" type="submit" 
+                                  title="Limpiar multa">
+                            <i class="bi bi-currency-exchange"></i>
+                          </button>
+                        </form>
+
+                        <!-- Eliminar (siempre disponible para ADMIN) -->
+                        <form th:action="@{'/prestamos/eliminar/' + ${p.id}}"
+                              method="post"
+                              onsubmit="return confirm('¿Está seguro de eliminar este préstamo? Esta acción no se puede deshacer.');">
+                          <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                          <button class="btn btn-sm btn-outline-danger btn-action" type="submit" 
+                                  title="Eliminar préstamo">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+              <a class="btn btn-outline-secondary" th:href="@{/}">
+                <i class="bi bi-arrow-left me-1"></i> Volver al inicio
+              </a>
+              <small class="text-muted">
+                Mostrando <span th:text="${prestamos.size()}">0</span> préstamos
+              </small>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </body>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-dark text-white py-4 mt-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-8">
+          <h5>Sistema de Gestión de Biblioteca</h5>
+          <p>Gestiona tus préstamos y devoluciones de manera eficiente.</p>
+        </div>
+        <div class="col-md-4">
+          <h5>Contacto</h5>
+          <address class="small mb-0">
+            <i class="bi bi-geo-alt"></i> Tibas Colima<br>
+            <i class="bi bi-envelope"></i> cardiaz24@hotmail.com<br>
+            <i class="bi bi-telephone"></i> 506 70176506
+          </address>
+        </div>
+      </div>
+      <hr>
+      <p class="text-center mb-0 small">&copy; 2025 Sistema de Gestión de Biblioteca. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.0.slim.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Inicializar DataTables
+      var table = $('#prestamosTable').DataTable({
+        language: {
+          url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+        },
+        pageLength: 10,
+        lengthMenu: [5, 10, 25, 50],
+        order: [[0, 'desc']], // Ordenar por ID descendente
+        columnDefs: [
+          { orderable: false, targets: 9 } // Deshabilitar ordenamiento en columna de acciones
+        ]
+      });
+      
+      // Búsqueda general
+      $('#searchInput').on('keyup', function() {
+        table.search(this.value).draw();
+      });
+      
+      // Filtro por estado
+      $('#estadoFilter').on('change', function() {
+        var status = this.value;
+        if (status === '') {
+          table.column(7).search('').draw();
+        } else {
+          table.column(7).search('^' + status + '$', true, false).draw();
+        }
+      });
+    });
+  </script>
+</body>
 </html>

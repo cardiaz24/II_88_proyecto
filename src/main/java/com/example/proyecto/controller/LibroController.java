@@ -1,9 +1,11 @@
 package com.example.proyecto.controller;
 
 import com.example.proyecto.model.Libro;
-import com.example.proyecto.repository.AutorRepository;
-import com.example.proyecto.repository.CategoriaRepository;
+import com.example.proyecto.model.Autor;
+import com.example.proyecto.model.Categoria;
 import com.example.proyecto.service.LibroService;
+import com.example.proyecto.service.AutorService;
+import com.example.proyecto.service.CategoriaService;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,86 +13,85 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/libros")
 public class LibroController {
-  private final LibroService libroService;
-  private final AutorRepository autorRepo;
-  private final CategoriaRepository categoriaRepo;
+    private final LibroService libroService;
+    private final AutorService autorService;
+    private final CategoriaService categoriaService;
 
-  public LibroController(LibroService s, AutorRepository a, CategoriaRepository c) {
-    this.libroService = s;
-    this.autorRepo = a;
-    this.categoriaRepo = c;
-  }
-
-  @GetMapping
-  public String listar(Model model) {
-    model.addAttribute("libros", libroService.findAll());
-    return "libros/lista";
-  }
-
-  @GetMapping("/nuevo")
-  public String nuevoLibro(Model model) {
-    model.addAttribute("libro", new Libro());
-    model.addAttribute("categorias", categoriaRepo.findAll());
-    model.addAttribute("autores", autorRepo.findAll());
-    return "libros/formulario";
-  }
-
-  /**
-   * @param libro
-   * @param br
-   * @param model
-   * @param ra
-   * @return
-   */
-@PostMapping
-public String guardar(@Valid @ModelAttribute("libro") Libro libro,
-                      BindingResult br,
-                      Model model,
-                      RedirectAttributes ra) {
-  
-  if (br.hasErrors()) {
-    model.addAttribute("autores", autorRepo.findAll());
-    model.addAttribute("categorias", categoriaRepo.findAll());
-    return "libros/formulario";
-  }
-
-  // Validación de duplicado
-  boolean existeOtro = libro.getId() == null
-    ? libroService.existePorTituloYCategoria(libro.getTitulo(), libro.getCategoria().getId())
-    : libroService.existePorTituloYCategoriaYIdNo(libro.getTitulo(), libro.getCategoria().getId(), libro.getId());
-
-  if (existeOtro) {
-    br.rejectValue("titulo", "error.libro", "Ya existe un libro con ese título en esta categoría");
-    model.addAttribute("autores", autorRepo.findAll());
-    model.addAttribute("categorias", categoriaRepo.findAll());
-    return "libros/formulario";
-  }
-
-  libroService.save(libro);
-  ra.addFlashAttribute("ok", "Libro guardado correctamente");
-  return "redirect:/libros";
-}
-
-  @GetMapping("/editar/{id}")
-  public String editar(@PathVariable Long id, Model model, RedirectAttributes ra) {
-    var opt = libroService.findById(id);
-    if (opt.isEmpty()) {
-      ra.addFlashAttribute("error", "Libro no existe");
-      return "redirect:/libros";
+    public LibroController(LibroService libroService, AutorService autorService, 
+                         CategoriaService categoriaService) {
+        this.libroService = libroService;
+        this.autorService = autorService;
+        this.categoriaService = categoriaService;
     }
-    model.addAttribute("libro", opt.get());
-    model.addAttribute("autores", autorRepo.findAll());
-    model.addAttribute("categorias", categoriaRepo.findAll());
-    return "libros/formulario";
-  }
 
-  @PostMapping("/eliminar/{id}")
-  public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
-    libroService.deleteById(id);
-    ra.addFlashAttribute("ok", "Libro eliminado");
-    return "redirect:/libros";
-  }
+    @GetMapping
+    public String listarLibros(Model model) {
+        model.addAttribute("libros", libroService.findAll());
+        return "libros/lista";
+    }
+
+    @GetMapping("/nuevo")
+    public String mostrarFormularioNuevo(Model model) {
+        model.addAttribute("libro", new Libro());
+        cargarDatosFormulario(model);
+        return "libros/formulario";
+    }
+
+    @GetMapping("/editar/{id}")
+    public String mostrarFormularioEditar(@PathVariable Long id, Model model) {
+        Libro libro = libroService.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Libro no encontrado"));
+        
+        model.addAttribute("libro", libro);
+        cargarDatosFormulario(model);
+        return "libros/formulario";
+    }
+
+    @PostMapping
+    public String guardarLibro(@Valid @ModelAttribute Libro libro, 
+                              BindingResult result, 
+                              Model model,
+                              RedirectAttributes redirectAttributes) {
+        
+        if (result.hasErrors()) {
+            cargarDatosFormulario(model);
+            return "libros/formulario";
+        }
+        
+        try {
+            libroService.save(libro);
+            redirectAttributes.addFlashAttribute("success", 
+                libro.getId() != null ? "Libro actualizado correctamente" : "Libro creado correctamente");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
+            cargarDatosFormulario(model);
+            return "libros/formulario";
+        }
+        
+        return "redirect:/libros";
+    }
+
+    @PostMapping("/eliminar/{id}")
+    public String eliminarLibro(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            libroService.deleteById(id);
+            redirectAttributes.addFlashAttribute("success", "Libro eliminado correctamente");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al eliminar libro: " + e.getMessage());
+        }
+        return "redirect:/libros";
+    }
+
+    private void cargarDatosFormulario(Model model) {
+        List<Autor> autores = autorService.findAll();
+        List<Categoria> categorias = categoriaService.findAll();
+        
+        model.addAttribute("autores", autores);
+        model.addAttribute("categorias", categorias);
+    }
 }

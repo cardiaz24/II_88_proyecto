@@ -1,23 +1,103 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Acceso denegado</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-  </head>
-  <body class="bg-light">
-    <div class="container py-5">
-      <div class="alert alert-danger mb-3">
-        No tienes permisos para acceder a esta página.
-      </div>
-      <div class="d-flex gap-2">
-        <a class="btn btn-outline-secondary" th:href="@{/}">Volver</a>
-        <a class="btn btn-primary" th:href="@{/login}">Ir al login</a>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Acceso Denegado - Sistema de Gestión de Biblioteca</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    body {
+      background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                  url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?ixlib=rb-4.0.3');
+      background-size: cover;
+      background-position: center;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+    }
+    .access-denied-card {
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      background-color: rgba(255, 255, 255, 0.95);
+    }
+    .icon-container {
+      font-size: 5rem;
+      color: #dc3545;
+    }
+    .btn-volver {
+      transition: all 0.3s;
+    }
+    .btn-volver:hover {
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card access-denied-card">
+          <div class="card-body text-center p-5">
+            <!-- Icono de advertencia -->
+            <div class="icon-container mb-4">
+              <i class="bi bi-shield-exclamation"></i>
+            </div>
+            
+            <h1 class="h2 mb-3 text-danger">Acceso Denegado</h1>
+            
+            <!-- Mensaje principal -->
+            <div class="alert alert-danger mb-4">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              <strong>No tienes permisos para acceder a esta página.</strong>
+            </div>
+            
+            <!-- Información adicional -->
+            <p class="mb-4">
+              No cuentas con los privilegios necesarios para ver este contenido. 
+              Si crees que esto es un error, por favor contacta al administrador del sistema.
+            </p>
+            
+            <!-- Opciones de navegación -->
+            <div class="d-flex flex-column flex-md-row justify-content-center gap-3">
+              <a class="btn btn-outline-secondary btn-volver" th:href="@{/}">
+                <i class="bi bi-house me-2"></i>Volver al Inicio
+              </a>
+              <a class="btn btn-primary btn-volver" th:href="@{/login}">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+              </a>
+              <a class="btn btn-info btn-volver text-white" th:href="@{/contacto}">
+                <i class="bi bi-envelope me-2"></i>Contactar Soporte
+              </a>
+            </div>
+            
+            <!-- Información de contacto -->
+            <div class="mt-4 pt-3 border-top">
+              <p class="text-muted small mb-1">
+                <i class="bi bi-geo-alt me-1"></i>Tibas Colima
+              </p>
+              <p class="text-muted small mb-1">
+                <i class="bi bi-envelope me-1"></i>cardiaz24@hotmail.com
+              </p>
+              <p class="text-muted small">
+                <i class="bi bi-telephone me-1"></i>506 70176506
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="text-center mt-4">
+          <p class="text-white mb-0">Sistema de Gestión de Biblioteca</p>
+          <p class="text-white-50 small">© 2025 - Todos los derechos reservados</p>
+        </div>
       </div>
     </div>
-  </body>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 </html>

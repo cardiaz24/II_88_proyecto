@@ -8,75 +8,155 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Service
 public class PrestamoService {
-  private static final BigDecimal MULTA_DIARIA = BigDecimal.valueOf(300);
+    private static final BigDecimal MULTA_DIARIA = BigDecimal.valueOf(300);
+    private static final int DIAS_PRESTAMO = 14;
+    private static final int MAX_PRESTAMOS_ACTIVOS = 2;
 
-  private final PrestamoRepository prestamoRepo;
-  private final EjemplarRepository ejemplarRepo;
+    private final PrestamoRepository prestamoRepo;
+    private final EjemplarRepository ejemplarRepo;
+    private final UsuarioRepository usuarioRepo;
+    private final NotificacionService notificacionService;
 
-  public PrestamoService(PrestamoRepository p, EjemplarRepository e){
-    this.prestamoRepo = p;
-    this.ejemplarRepo = e;
-  }
-
-  @Transactional
-  public Prestamo prestar(Usuario usuario, Ejemplar ejemplar){
-    // 1) No prestar si el usuario tiene multas pendientes
-    boolean tieneMultas = prestamoRepo.existsByUsuario_IdAndEstadoAndMultaGreaterThan(
-        usuario.getId(), PrestamoEstado.CON_MORA, BigDecimal.ZERO
-    );
-    if (tieneMultas) throw new IllegalStateException("Usuario con multas pendientes");
-
-    // 2) No prestar si el ejemplar ya tiene un préstamo ACTIVO (validación de BD)
-    boolean ejemplarOcupado = prestamoRepo.existsByEjemplar_IdAndEstado(ejemplar.getId(), PrestamoEstado.ACTIVO);
-    if (ejemplarOcupado || ejemplar.isPrestado()) throw new IllegalStateException("El ejemplar ya está prestado");
-
-    // 3) Máximo 2 préstamos activos por usuario
-    long activos = prestamoRepo.countByUsuario_IdAndEstado(usuario.getId(), PrestamoEstado.ACTIVO);
-    if (activos >= 2) throw new IllegalStateException("Máximo 2 préstamos activos por usuario");
-
-    // Crear préstamo
-    LocalDate hoy = LocalDate.now();
-    Prestamo pr = new Prestamo(usuario, ejemplar, hoy);
-    pr.setFechaVence(hoy.plusDays(14));
-    pr.setMulta(BigDecimal.ZERO);
-    pr.setEstado(PrestamoEstado.ACTIVO);
-
-    ejemplar.setPrestado(true);
-    ejemplarRepo.save(ejemplar);
-
-    return prestamoRepo.save(pr);
-  }
-
-  @Transactional
-  public Prestamo devolver(Prestamo pr){
-    if (pr.getEstado() != PrestamoEstado.ACTIVO) return pr;
-
-    pr.setFechaDevolucion(LocalDate.now());
-    long diasAtraso = Math.max(0, ChronoUnit.DAYS.between(pr.getFechaVence(), pr.getFechaDevolucion()));
-
-    if (diasAtraso > 0){
-      pr.setMulta(MULTA_DIARIA.multiply(BigDecimal.valueOf(diasAtraso)));
-      pr.setEstado(PrestamoEstado.CON_MORA);
-    } else {
-      pr.setEstado(PrestamoEstado.DEVUELTO);
+    public PrestamoService(PrestamoRepository prestamoRepo, EjemplarRepository ejemplarRepo,
+                         UsuarioRepository usuarioRepo, NotificacionService notificacionService) {
+        this.prestamoRepo = prestamoRepo;
+        this.ejemplarRepo = ejemplarRepo;
+        this.usuarioRepo = usuarioRepo;
+        this.notificacionService = notificacionService;
     }
 
-    Ejemplar ej = pr.getEjemplar();
-    ej.setPrestado(false);
-    ejemplarRepo.save(ej);
+    @Transactional
+    public Prestamo prestar(Usuario usuario, Ejemplar ejemplar) {
+        // Validaciones
+        validarPrestamo(usuario, ejemplar);
 
-    return prestamoRepo.save(pr);
-  }
+        // Crear préstamo
+        LocalDate hoy = LocalDate.now();
+        Prestamo prestamo = new Prestamo();
+        prestamo.setUsuario(usuario);
+        prestamo.setEjemplar(ejemplar);
+        prestamo.setFechaPrestamo(hoy);
+        prestamo.setFechaVence(hoy.plusDays(DIAS_PRESTAMO));
+        prestamo.setMulta(BigDecimal.ZERO);
+        prestamo.setEstado(PrestamoEstado.ACTIVO);
 
-  @Transactional
-  public Prestamo limpiarMulta(Prestamo pr){
-    pr.setMulta(BigDecimal.ZERO);
-    if (pr.getEstado() == PrestamoEstado.CON_MORA){
-      pr.setEstado(PrestamoEstado.DEVUELTO);
+        // Actualizar ejemplar
+        ejemplar.setPrestado(true);
+        ejemplarRepo.save(ejemplar);
+
+        // Guardar préstamo
+        Prestamo prestamoGuardado = prestamoRepo.save(prestamo);
+        
+        // Notificar al usuario
+        notificacionService.enviarNotificacionPrestamo(usuario, ejemplar, prestamoGuardado.getFechaVence());
+        
+        return prestamoGuardado;
     }
-    return prestamoRepo.save(pr);
-  }
+
+    private void validarPrestamo(Usuario usuario, Ejemplar ejemplar) {
+        // 1. Verificar que el usuario no tenga multas pendientes
+        BigDecimal multaPendiente = prestamoRepo.sumMultasPendientesByUsuarioId(usuario.getId());
+        if (multaPendiente.compareTo(BigDecimal.ZERO) > 0) {
+            throw new IllegalStateException("Usuario con multas pendientes: ₡" + multaPendiente);
+        }
+
+        // 2. Verificar que el ejemplar esté disponible
+        if (ejemplar.isPrestado()) {
+            throw new IllegalStateException("El ejemplar ya está prestado");
+        }
+
+        // 3. Verificar máximo de préstamos activos
+        long prestamosActivos = prestamoRepo.countByUsuarioIdAndEstado(usuario.getId(), PrestamoEstado.ACTIVO);
+        if (prestamosActivos >= MAX_PRESTAMOS_ACTIVOS) {
+            throw new IllegalStateException("Máximo " + MAX_PRESTAMOS_ACTIVOS + " préstamos activos por usuario");
+        }
+    }
+
+    @Transactional
+    public Prestamo devolver(Long prestamoId) {
+        Prestamo prestamo = prestamoRepo.findById(prestamoId)
+                .orElseThrow(() -> new IllegalArgumentException("Préstamo no encontrado"));
+
+        if (prestamo.getEstado() != PrestamoEstado.ACTIVO) {
+            return prestamo;
+        }
+
+        prestamo.setFechaDevolucion(LocalDate.now());
+        long diasAtraso = Math.max(0, ChronoUnit.DAYS.between(prestamo.getFechaVence(), prestamo.getFechaDevolucion()));
+
+        if (diasAtraso > 0) {
+            BigDecimal multa = MULTA_DIARIA.multiply(BigDecimal.valueOf(diasAtraso));
+            prestamo.setMulta(multa);
+            prestamo.setEstado(PrestamoEstado.CON_MORA);
+            
+            // Actualizar multa pendiente del usuario
+            Usuario usuario = prestamo.getUsuario();
+            usuario.setMultaPendiente(usuario.getMultaPendiente().add(multa));
+            usuarioRepo.save(usuario);
+        } else {
+            prestamo.setEstado(PrestamoEstado.DEVUELTO);
+        }
+
+        // Liberar ejemplar
+        Ejemplar ejemplar = prestamo.getEjemplar();
+        ejemplar.setPrestado(false);
+        ejemplarRepo.save(ejemplar);
+
+        return prestamoRepo.save(prestamo);
+    }
+
+    @Transactional
+    public void limpiarMulta(Long prestamoId) {
+        Prestamo prestamo = prestamoRepo.findById(prestamoId)
+                .orElseThrow(() -> new IllegalArgumentException("Préstamo no encontrado"));
+
+        if (prestamo.getMulta().compareTo(BigDecimal.ZERO) > 0) {
+            // Restar multa del usuario
+            Usuario usuario = prestamo.getUsuario();
+            usuario.setMultaPendiente(usuario.getMultaPendiente().subtract(prestamo.getMulta()));
+            usuarioRepo.save(usuario);
+            
+            // Limpiar multa del préstamo
+            prestamo.setMulta(BigDecimal.ZERO);
+            
+            // Cambiar estado si estaba en mora
+            if (prestamo.getEstado() == PrestamoEstado.CON_MORA) {
+                prestamo.setEstado(PrestamoEstado.DEVUELTO);
+            }
+            
+            prestamoRepo.save(prestamo);
+        }
+    }
+
+    @Transactional
+    public void eliminarPrestamo(Long prestamoId) {
+        Prestamo prestamo = prestamoRepo.findById(prestamoId)
+                .orElseThrow(() -> new IllegalArgumentException("Préstamo no encontrado"));
+
+        // Solo permitir eliminar préstamos activos
+        if (prestamo.getEstado() == PrestamoEstado.ACTIVO) {
+            // Liberar ejemplar
+            Ejemplar ejemplar = prestamo.getEjemplar();
+            ejemplar.setPrestado(false);
+            ejemplarRepo.save(ejemplar);
+        }
+        
+        prestamoRepo.delete(prestamo);
+    }
+
+    public List<Prestamo> obtenerPrestamosPorUsuario(Long usuarioId) {
+        return prestamoRepo.findByUsuarioId(usuarioId);
+    }
+
+    public List<Prestamo> obtenerPrestamosVencidos() {
+        return prestamoRepo.findByEstadoAndFechaVenceBefore(PrestamoEstado.ACTIVO, LocalDate.now());
+    }
+
+    public List<Prestamo> obtenerPrestamosActivos() {
+        return prestamoRepo.findByEstado(PrestamoEstado.ACTIVO);
+    }
 }
