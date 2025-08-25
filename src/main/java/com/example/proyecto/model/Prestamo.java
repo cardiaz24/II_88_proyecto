@@ -4,7 +4,11 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "prestamo", uniqueConstraints = @UniqueConstraint(name = "uk_prestamo_ejemplar_activo", columnNames = {
     "ejemplar_id", "estado" }))

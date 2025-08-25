@@ -4,8 +4,13 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
-import java.util.List;
 
+import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @Entity
 @Table(name = "libro")
 public class Libro {
@@ -44,6 +49,10 @@ public class Libro {
     @OneToMany(mappedBy = "libro", cascade = CascadeType.ALL)
     private List<Ejemplar> ejemplares = new ArrayList<>();
 
+
+
+
+
     // Constructores, getters y setters...
     public Libro() {}
 
@@ -52,4 +61,7 @@ public class Libro {
         this.unidades = unidades;
         this.categoria = categoria;
     }
+
+
+   
 }

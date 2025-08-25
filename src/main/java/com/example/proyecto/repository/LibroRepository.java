@@ -21,6 +21,9 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
     List<Libro> findByUnidadesGreaterThan(int unidades);
     List<Libro> findByUnidades(int unidades);
     
+
+
+
     // Métodos de contaje
     long countByUnidadesGreaterThan(int unidades);
     long countByUnidades(int unidades);
@@ -36,4 +39,8 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
     @Query("SELECT l FROM Libro l WHERE LOWER(l.titulo) LIKE LOWER(CONCAT('%', :termino, '%')) OR " +
            "LOWER(l.isbn) LIKE LOWER(CONCAT('%', :termino, '%'))")
     List<Libro> buscarPorTermino(@Param("termino") String termino);
+
+
+
+
 }

@@ -33,7 +33,7 @@ public class Autor {
         this.pais = pais;
     }
 
-    // Getters y setters (necesarios para Thymeleaf/JPA)
+    // Getters y setters
     public Long getId() {
         return id;
     }
@@ -62,14 +62,4 @@ public class Autor {
         this.libros = libros;
     }
 
-    // Opcional: helpers para la relación bidireccional
-    public void addLibro(Libro l) {
-        this.libros.add(l);
-        l.getAutores().add(this);
-    }
-
-    public void removeLibro(Libro l) {
-        this.libros.remove(l);
-        l.getAutores().remove(this);
-    }
 }

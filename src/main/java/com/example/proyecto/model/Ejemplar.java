@@ -1,7 +1,10 @@
 package com.example.proyecto.model;
-
+import lombok.Getter;
+import lombok.Setter;
 import jakarta.persistence.*;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "ejemplar")
 public class Ejemplar {
@@ -20,7 +23,9 @@ public class Ejemplar {
     private Prestamo prestamo;
 
     private boolean prestado = false;
-
+    
+    @Version
+    private Long version; 
     // Constructores, getters y setters...
     public Ejemplar() {}
 

@@ -2,6 +2,8 @@ package com.example.proyecto.repository;
 
 import com.example.proyecto.model.Prestamo;
 import com.example.proyecto.model.PrestamoEstado;
+import com.example.proyecto.model.Usuario;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,7 +16,7 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
     long countByUsuarioIdAndEstado(Long usuarioId, PrestamoEstado estado);
     
     boolean existsByEjemplarIdAndEstado(Long ejemplarId, PrestamoEstado estado);
-    
+    List<Prestamo> findByUsuario(Usuario usuario);
     List<Prestamo> findByUsuarioId(Long usuarioId);
     
     List<Prestamo> findByUsuarioIdOrderByFechaPrestamoDesc(Long usuarioId);
@@ -28,4 +30,6 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
     
     @Query("SELECT p FROM Prestamo p WHERE p.usuario.id = :usuarioId AND p.estado = 'ACTIVO'")
     List<Prestamo> findPrestamosActivosByUsuarioId(@Param("usuarioId") Long usuarioId);
+
+
 }

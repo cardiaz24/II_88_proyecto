@@ -19,19 +19,19 @@ import java.util.List;
 @RequestMapping("/libros")
 public class LibroController {
     private final LibroService libroService;
-    private final AutorService autorService;
-    private final CategoriaService categoriaService;
+    private final AutorService AutorService;
+    private final CategoriaService CategoriaService;
 
     public LibroController(LibroService libroService, AutorService autorService, 
                          CategoriaService categoriaService) {
         this.libroService = libroService;
-        this.autorService = autorService;
-        this.categoriaService = categoriaService;
+        this.AutorService = autorService;
+        this.CategoriaService = categoriaService;
     }
 
     @GetMapping
     public String listarLibros(Model model) {
-        model.addAttribute("libros", libroService.findAll());
+        model.addAttribute("libros", libroService.obtenerTodos());
         return "libros/lista";
     }
 
@@ -44,7 +44,7 @@ public class LibroController {
 
     @GetMapping("/editar/{id}")
     public String mostrarFormularioEditar(@PathVariable Long id, Model model) {
-        Libro libro = libroService.findById(id)
+        Libro libro = libroService.obtenerPorId(id)
                 .orElseThrow(() -> new IllegalArgumentException("Libro no encontrado"));
         
         model.addAttribute("libro", libro);
@@ -52,34 +52,40 @@ public class LibroController {
         return "libros/formulario";
     }
 
-    @PostMapping
-    public String guardarLibro(@Valid @ModelAttribute Libro libro, 
-                              BindingResult result, 
-                              Model model,
-                              RedirectAttributes redirectAttributes) {
-        
-        if (result.hasErrors()) {
-            cargarDatosFormulario(model);
-            return "libros/formulario";
-        }
-        
-        try {
-            libroService.save(libro);
-            redirectAttributes.addFlashAttribute("success", 
-                libro.getId() != null ? "Libro actualizado correctamente" : "Libro creado correctamente");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
-            cargarDatosFormulario(model);
-            return "libros/formulario";
-        }
-        
-        return "redirect:/libros";
+@PostMapping
+public String guardarLibro(@Valid @ModelAttribute("libro") Libro libro,
+                           BindingResult result,
+                           Model model,
+                           RedirectAttributes redirectAttributes) {
+
+    if (result.hasErrors()) {
+        cargarDatosFormulario(model);
+        return "libros/formulario";
     }
+
+    try {
+       Libro libroGuardado = libroService.guardar(libro);
+
+redirectAttributes.addFlashAttribute("success",
+    (libroGuardado.getId() != null ? "Libro actualizado correctamente" : "Libro creado correctamente"));
+
+return "redirect:/libros";
+
+    } catch (IllegalArgumentException ex) {
+        model.addAttribute("error", ex.getMessage());
+        cargarDatosFormulario(model);
+        return "libros/formulario";
+    } catch (Exception e) {
+        model.addAttribute("error", "Error inesperado al guardar el libro.");
+        cargarDatosFormulario(model);
+        return "libros/formulario";
+    }
+}
 
     @PostMapping("/eliminar/{id}")
     public String eliminarLibro(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
-            libroService.deleteById(id);
+            libroService.eliminarPorId(id);
             redirectAttributes.addFlashAttribute("success", "Libro eliminado correctamente");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al eliminar libro: " + e.getMessage());
@@ -88,8 +94,8 @@ public class LibroController {
     }
 
     private void cargarDatosFormulario(Model model) {
-        List<Autor> autores = autorService.findAll();
-        List<Categoria> categorias = categoriaService.findAll();
+        List<Autor> autores = AutorService.findAll();
+        List<Categoria> categorias = CategoriaService.findAll();
         
         model.addAttribute("autores", autores);
         model.addAttribute("categorias", categorias);

@@ -38,12 +38,12 @@ public class LibroService {
         if (!libroRepository.existsById(id)) {
             throw new IllegalArgumentException("El libro con ID " + id + " no existe");
         }
-        
+
         // Verificar si el libro tiene ejemplares prestados
         if (tieneEjemplaresPrestados(id)) {
             throw new IllegalStateException("No se puede eliminar el libro porque tiene ejemplares prestados");
         }
-        
+
         libroRepository.deleteById(id);
     }
 
@@ -85,11 +85,11 @@ public class LibroService {
     public void reducirUnidades(Long libroId, int cantidad) {
         Libro libro = libroRepository.findById(libroId)
                 .orElseThrow(() -> new IllegalArgumentException("Libro no encontrado"));
-        
+
         if (libro.getUnidades() < cantidad) {
             throw new IllegalStateException("No hay suficientes unidades disponibles");
         }
-        
+
         libro.setUnidades(libro.getUnidades() - cantidad);
         libroRepository.save(libro);
     }
@@ -97,7 +97,7 @@ public class LibroService {
     public void aumentarUnidades(Long libroId, int cantidad) {
         Libro libro = libroRepository.findById(libroId)
                 .orElseThrow(() -> new IllegalArgumentException("Libro no encontrado"));
-        
+
         libro.setUnidades(libro.getUnidades() + cantidad);
         libroRepository.save(libro);
     }
@@ -119,15 +119,15 @@ public class LibroService {
         if (libro.getTitulo() == null || libro.getTitulo().trim().isEmpty()) {
             throw new IllegalArgumentException("El título del libro es obligatorio");
         }
-        
+
         if (libro.getCategoria() == null) {
             throw new IllegalArgumentException("La categoría del libro es obligatoria");
         }
-        
+
         if (libro.getUnidades() == null || libro.getUnidades() < 0) {
             throw new IllegalArgumentException("Las unidades deben ser un número positivo");
         }
-        
+
         // Validar duplicados (solo si es un libro nuevo o está cambiando de categoría)
         if (libro.getId() == null) {
             if (existePorTituloYCategoria(libro.getTitulo(), libro.getCategoria().getId())) {
@@ -141,7 +141,7 @@ public class LibroService {
     }
 
     private boolean tieneEjemplaresPrestados(Long libroId) {
-       
+
         return libroRepository.countEjemplaresPrestadosByLibroId(libroId) > 0;
     }
 

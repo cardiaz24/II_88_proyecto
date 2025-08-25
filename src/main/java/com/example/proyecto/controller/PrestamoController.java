@@ -23,7 +23,7 @@ public class PrestamoController {
     private final EjemplarService ejemplarService;
 
     public PrestamoController(PrestamoService prestamoService, UsuarioService usuarioService,
-                            EjemplarService ejemplarService) {
+            EjemplarService ejemplarService) {
         this.prestamoService = prestamoService;
         this.usuarioService = usuarioService;
         this.ejemplarService = ejemplarService;
@@ -44,7 +44,7 @@ public class PrestamoController {
 
     @PostMapping
     public String crearPrestamo(@ModelAttribute Prestamo prestamo,
-                               RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         try {
             prestamoService.prestar(prestamo.getUsuario(), prestamo.getEjemplar());
             redirectAttributes.addFlashAttribute("success", "Préstamo creado correctamente");
@@ -55,15 +55,12 @@ public class PrestamoController {
     }
 
     @PostMapping("/devolver/{id}")
-    public String devolverPrestamo(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String devolverPrestamo(@PathVariable Long id, RedirectAttributes ra) {
         try {
-            Prestamo prestamo = prestamoService.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Préstamo no encontrado"));
-            
-            prestamoService.devolver(prestamo);
-            redirectAttributes.addFlashAttribute("success", "Préstamo devuelto correctamente");
+            prestamoService.devolver(id);
+            ra.addFlashAttribute("success", "Préstamo devuelto correctamente");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error al devolver préstamo: " + e.getMessage());
+            ra.addFlashAttribute("error", "Error al devolver préstamo: " + e.getMessage());
         }
         return "redirect:/prestamos";
     }
@@ -72,7 +69,7 @@ public class PrestamoController {
     public String misPrestamos(@AuthenticationPrincipal User user, Model model) {
         Usuario usuario = usuarioService.findByUsername(user.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-        
+
         List<Prestamo> prestamos = prestamoService.findByUsuario(usuario);
         model.addAttribute("prestamos", prestamos);
         return "prestamos/mis-libros";
@@ -81,7 +78,7 @@ public class PrestamoController {
     private void cargarDatosFormulario(Model model) {
         List<Usuario> usuarios = usuarioService.findAll();
         List<Ejemplar> ejemplares = ejemplarService.findByPrestadoFalse();
-        
+
         model.addAttribute("usuarios", usuarios);
         model.addAttribute("ejemplares", ejemplares);
     }

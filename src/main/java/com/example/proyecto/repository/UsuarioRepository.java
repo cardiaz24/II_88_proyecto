@@ -18,7 +18,7 @@ Optional<Usuario> findByUsername(String username);
        "(SELECT COUNT(p) FROM Prestamo p WHERE p.usuario = u AND p.estado = 'ACTIVO') < 2")
 List<Usuario> findUsuariosHabilitadosParaPrestamo();
 
-
-
+    boolean existsByEmailIgnoreCase(String email);
+    boolean existsByEmail(String email);
 
 }

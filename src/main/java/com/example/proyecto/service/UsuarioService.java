@@ -5,7 +5,8 @@ import com.example.proyecto.repository.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UsuarioService {
@@ -68,13 +69,32 @@ public class UsuarioService {
         return usuarioRepository.save(usuarioExistente);
     }
     
-    public Usuario obtenerUsuarioPorUsername(String username) {
-        return usuarioRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-    }
-    
+   public Optional<Usuario> findByUsername(String username) {
+    return usuarioRepository.findByUsername(username);
+}
     public Usuario obtenerUsuarioPorId(Long id) {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
     }
+
+
+public List<Usuario> findAll() {
+    return usuarioRepository.findAll();
+}
+
+
+
+
+
+    public boolean existeUsername(String username) {
+        return usuarioRepository.existsByUsername(username);
+    }
+
+    @Transactional
+    public Usuario crearUsuario(Usuario usuario) {
+        // Codificar la contraseña antes de guardar
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+        return usuarioRepository.save(usuario); 
+
+}
 }

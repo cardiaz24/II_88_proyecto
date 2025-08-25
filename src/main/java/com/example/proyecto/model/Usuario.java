@@ -4,9 +4,14 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "usuario", uniqueConstraints = {
     @UniqueConstraint(columnNames = "username"),
@@ -49,8 +54,8 @@ public class Usuario {
   @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL)
   private List<Prestamo> prestamos = new ArrayList<>();
 
-  @Column(columnDefinition = "double default 0.0")
-  private double multaPendiente;
+  @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal multaPendiente = BigDecimal.ZERO;
 
   // Constructores
   public Usuario() {
@@ -138,13 +143,7 @@ public class Usuario {
     this.prestamos = prestamos;
   }
 
-  public double getMultaPendiente() {
-    return multaPendiente;
-  }
-
-  public void setMultaPendiente(double multaPendiente) {
-    this.multaPendiente = multaPendiente;
-  }
+ 
 
   public String getNombreCompleto() {
     return nombre + " " + apellidos;
