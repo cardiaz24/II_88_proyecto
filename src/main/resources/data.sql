@@ -40,18 +40,17 @@ INSERT INTO ejemplar (id, codigo, libro_id, prestado) VALUES
 (6, 'LIB-005-1', 5, false),
 (7, 'LIB-005-2', 5, false);
 
--- Insertar usuario administrador (password: admin123)
+-- Insertar usuario administrador (password: password)
 INSERT INTO usuario (id, nombre, apellidos, username, password, email, rol, enabled, multa_pendiente) VALUES 
 (1, 'Administrador', 'Del Sistema', 'admin', 
-'$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubhFi', 
-'admin@biblioteca.com', 'ADMIN', true, 0);
+'{bcrypt}$2a$10$7EqJtq98hPqEX7fNZaFWoOHi5rQ.VS4W4.bfQ8b8i7WZKD0dfzpG6', 
+'admin@biblioteca.com', 'ADMIN', true, 0.00);
 
--- Insertar usuario normal (password: user123)
+-- Insertar usuario normal (password: password)
 INSERT INTO usuario (id, nombre, apellidos, username, password, email, rol, enabled, multa_pendiente) VALUES 
 (2, 'Usuario', 'Normal', 'user', 
-'$2a$10$ZM8yLk2sV/5sTVsCQ82B.eJtvjpI9r6N5QeS7pJ4q4z4q4q4q4q4q', 
-'user@biblioteca.com', 'USER', true, 0);
-
+'{bcrypt}$2a$10$7EqJtq98hPqEX7fNZaFWoOHi5rQ.VS4W4.bfQ8b8i7WZKD0dfzpG6', 
+'user@biblioteca.com', 'USER', true, 0.00);
 -- Insertar préstamos de ejemplo
 INSERT INTO prestamo (id, usuario_id, ejemplar_id, fecha_prestamo, fecha_devolucion, fecha_vence, multa, estado) VALUES 
 (1, 2, 1, '2025-08-10', NULL, '2025-08-24', 0, 'ACTIVO'),

@@ -3,54 +3,51 @@ package com.example.proyecto.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
-    private final UsuarioDetailsService uds;
 
-    public SecurityConfig(UsuarioDetailsService uds) {
-        this.uds = uds;
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        // Entiende contraseñas con prefijo {bcrypt}
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+                // H2 console
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
+                .headers(h -> h.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
 
-    @Bean
-    public RoleBasedAuthSuccessHandler roleSuccessHandler() {
-        return new RoleBasedAuthSuccessHandler();
-    }
+                // Autorizaciones
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/h2-console/**",
+                                "/css/**", "/js/**", "/images/**", "/webjars/**",
+                                "/login", "/error", "/registro")
+                        .permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated())
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
-            .headers(h -> h.frameOptions(f -> f.sameOrigin()))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/home", "/login", "/registro", "/h2-console/**", 
-                               "/css/**", "/js/**", "/img/**", "/webjars/**").permitAll()
-                
-                // ADMIN solo
-                .requestMatchers("/admin/**", "/libros/**", "/prestamos/**", 
-                               "/autores/**", "/categorias/**").hasRole("ADMIN")
-                
-                // USER y ADMIN
-                .requestMatchers("/usuario/perfil", "/prestamos/mis-libros", 
-                               "/prestamos/historial").hasAnyRole("USER", "ADMIN")
-                
-                .anyRequest().authenticated())
-            .formLogin(login -> login
-                .loginPage("/login").permitAll()
-                .successHandler(roleSuccessHandler())
-            )
-            .exceptionHandling(e -> e.accessDeniedPage("/access-denied"))
-            .logout(l -> l.logoutUrl("/logout").logoutSuccessUrl("/login?logout").permitAll())
-            .userDetailsService(uds);
+                // Login form
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/", true)
+                        .permitAll())
 
-        return http.build();
+                // Logout (POST por defecto)
+                .logout(l -> l
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .permitAll())
+
+                .build();
     }
 }
